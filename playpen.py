@@ -17,8 +17,6 @@ from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Hash import SHA256
 from Crypto.Random import get_random_bytes
 
-ENCODING = "utf-8"
-
 
 def create_pbk():
     password = b'password'
@@ -33,6 +31,5 @@ create_pbk()
 
 theString = "password"
 print("theString | type(theString)", theString, "|", type(theString))
-theStrihg_encoded = theString.encode(ENCODING)
+theStrihg_encoded = theString.encode()
 print("theStrihg_encoded | type(theStrihg_encoded)", theStrihg_encoded, "|", type(theStrihg_encoded))
-
