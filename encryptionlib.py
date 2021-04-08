@@ -26,7 +26,7 @@ def create_master_key(secret: str, salt: str, iterations: int, hash_module=SHA25
     """
         Return a master key derived from secret with parameters specified. Internally, it is using PBKDF2 from Cryptodome.
     :param secret: The secret from which the returning key is derived.
-    :param a_salt: Salt used to derive the key
+    :param salt: Salt used to derive the key
     :param iterations: Number of iterations. Default to 1000
     :param key_length: Key length to create. Default to 32
     :param hash_module: Hash algorithm to use. Default to SHA256 (in Crypto.Hash from Cryptodome)
@@ -39,14 +39,20 @@ def create_master_key(secret: str, salt: str, iterations: int, hash_module=SHA25
     keys = PBKDF2(secret, salt, key_length, count=iterations, hmac_hash_module=hash_module)
     key = keys[:key_length]
 
-    master_key = binascii.hexlify(key).decode()
+    key = binascii.hexlify(key).decode()
 
     if DEBUG:
-        print(binascii.hexlify(key))
-        print(master_key)
+        print(key)
 
-    return master_key
+    return key
 
+print("SHA256")
+print("Master Key")
+key_master = create_master_key("password", "0ED4AFF74B4C4EE3AD1CF95DDBAF62EE", 1000000, SHA256)
 
-create_master_key("password", "0ED4AFF74B4C4EE3AD1CF95DDBAF62EE", 1000, SHA256)
-create_master_key("password", "0ED4AFF74B4C4EE3AD1CF95DDBAF62EE", 1000)
+print("Encryption Key")
+key_encryption = create_master_key(key_master, "Encryption Key", 1, SHA256)
+
+print("HMAC Key")
+key_hmac = create_master_key(key_master, "HMAC Key", 1, SHA256)
+
