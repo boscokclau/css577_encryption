@@ -11,6 +11,7 @@ import binascii
 from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Hash import SHA256
 from Crypto.Hash import SHA512
+from time import time
 
 ### Global Constants ###
 DEFAULT_ITERATIONS = 1000
@@ -22,6 +23,19 @@ SUPPORTED_HASH_MODULE = {SHA256: 32, SHA512: 64}
 DEBUG = True
 
 
+def timing(f):
+    def wrapper(*args, **kwargs):
+        start = time()
+        result = f(*args, **kwargs)
+        end = time()
+        print("Time spent =", end - start)
+        print("Throughput = ", 1 / (end - start))
+        return result
+
+    return wrapper
+
+
+@timing
 def create_key(secret: str, salt: str, iterations: int, hash_module=SHA256) -> str:
     """
         Return a master key derived from secret with parameters specified. Internally, it is using PBKDF2 from Cryptodome.
@@ -36,6 +50,10 @@ def create_key(secret: str, salt: str, iterations: int, hash_module=SHA256) -> s
         raise ValueError("Unsupported hashing algorithm.")
 
     key_length = SUPPORTED_HASH_MODULE[hash_module]
+
+    if DEBUG:
+        print(secret, salt, iterations, hash_module)
+
     keys = PBKDF2(secret, salt, key_length, count=iterations, hmac_hash_module=hash_module)
     key = keys[:key_length]
 
@@ -46,13 +64,13 @@ def create_key(secret: str, salt: str, iterations: int, hash_module=SHA256) -> s
 
     return key
 
+
 print("SHA256")
 print("Master Key")
-key_master = create_key("password", "0ED4AFF74B4C4EE3AD1CF95DDBAF62EE", 1000000, SHA256)
+key_master = create_key("password", "0ED4AFF74B4C4EE3AD1CF95DDBAF62EE", 1000, SHA256)
 
 print("Encryption Key")
 key_encryption = create_key(key_master, "Encryption Key", 1, SHA256)
 
 print("HMAC Key")
 key_hmac = create_key(key_master, "HMAC Key", 1, SHA256)
-
