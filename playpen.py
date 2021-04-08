@@ -21,6 +21,7 @@ PASSWORD = "password"
 SALT_MASTER_KEY = "0ED4AFF74B4C4EE3AD1CF95DDBAF62EE"
 SALT_ENCRYPTION_KEY = "encryption key"
 SALT_HMAC_KEY = "hmac key"
+NON_AUTOGEN_IV = None
 
 HASH_MODULE = SHA256
 AES_MODE = AES.MODE_CBC
@@ -91,7 +92,7 @@ key_hmac = create_key(key_master, SALT_HMAC_KEY, 1, HASH_MODULE)
 
 print("---------------------------------------------")
 print("Encrypt/Decrypt... key size =", len(key_encryption))
-cipher = AES.new(binascii.unhexlify(key_encryption), AES_MODE)
+cipher = AES.new(key=binascii.unhexlify(key_encryption), mode=AES_MODE, iv=NON_AUTOGEN_IV)
 
 # Generated IV
 iv = cipher.iv
@@ -211,7 +212,7 @@ print()
 d_hmac_calculated = HMAC.HMAC(binascii.unhexlify(d_hmac_key), encrypted_file_with_iv, HASH_MODULE).digest()
 print("d_hmac == d_hmac_calculated:", d_hmac == d_hmac_calculated)
 
-cipher = AES.new(binascii.unhexlify(d_decryption_key), d_mode, d_iv)
+cipher = AES.new(key=binascii.unhexlify(d_decryption_key), mode=d_mode, iv=d_iv)
 decrypted_file = cipher.decrypt(encrypted_file_with_iv_hmac)
 
 with open("ProdComp_decrypted.xlsx", "wb") as df:
