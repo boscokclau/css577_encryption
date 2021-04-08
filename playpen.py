@@ -26,6 +26,9 @@ NON_AUTOGEN_IV = None
 HASH_MODULE = SHA256
 AES_MODE = AES.MODE_CBC
 
+CIPHER = AES
+OP_MODE = AES_MODE
+
 ### Check hash_module support
 SUPPORTED_HASH_MODULE = {SHA256: 16, SHA512: 32}
 
@@ -92,7 +95,7 @@ key_hmac = create_key(key_master, SALT_HMAC_KEY, 1, HASH_MODULE)
 
 print("---------------------------------------------")
 print("Encrypt/Decrypt... key size =", len(key_encryption))
-cipher = AES.new(key=binascii.unhexlify(key_encryption), mode=AES_MODE, iv=NON_AUTOGEN_IV)
+cipher = CIPHER.new(key=binascii.unhexlify(key_encryption), mode=OP_MODE, iv=NON_AUTOGEN_IV)
 
 # Generated IV
 iv = cipher.iv
@@ -191,7 +194,7 @@ d_salt_decryption = SALT_ENCRYPTION_KEY
 d_salt_hmac = SALT_HMAC_KEY
 d_hash_module = HASH_MODULE
 d_iterations = DEFAULT_ITERATIONS
-d_mode = AES.MODE_CBC
+d_mode = OP_MODE
 
 
 d_master_key = create_key(PASSWORD, d_salt_master, d_iterations, d_hash_module)
@@ -212,7 +215,7 @@ print()
 d_hmac_calculated = HMAC.HMAC(binascii.unhexlify(d_hmac_key), encrypted_file_with_iv, HASH_MODULE).digest()
 print("d_hmac == d_hmac_calculated:", d_hmac == d_hmac_calculated)
 
-cipher = AES.new(key=binascii.unhexlify(d_decryption_key), mode=d_mode, iv=d_iv)
+cipher = CIPHER.new(key=binascii.unhexlify(d_decryption_key), mode=d_mode, iv=d_iv)
 decrypted_file = cipher.decrypt(encrypted_file_with_iv_hmac)
 
 with open("ProdComp_decrypted.xlsx", "wb") as df:
