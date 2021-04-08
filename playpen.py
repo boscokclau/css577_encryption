@@ -22,7 +22,7 @@ SUPPORTED_HASH_MODULE = {SHA256: 32, SHA512: 64}
 DEBUG = True
 
 
-def create_master_key(secret: str, salt: str, iterations: int, hash_module=SHA256) -> str:
+def create_key(secret: str, salt: str, iterations: int, hash_module=SHA256) -> str:
     """
         Return a master key derived from secret with parameters specified. Internally, it is using PBKDF2 from Cryptodome.
     :param secret: The secret from which the returning key is derived.
@@ -48,11 +48,11 @@ def create_master_key(secret: str, salt: str, iterations: int, hash_module=SHA25
 
 print("SHA256")
 print("Master Key")
-key_master = create_master_key("password", "0ED4AFF74B4C4EE3AD1CF95DDBAF62EE", 1000000, SHA256)
+key_master = create_key("password", "0ED4AFF74B4C4EE3AD1CF95DDBAF62EE", 1000000, SHA256)
 
 print("Encryption Key")
-key_encryption = create_master_key(key_master, "Encryption Key", 1, SHA256)
+key_encryption = create_key(key_master, "Encryption Key", 1, SHA256)
 
 print("HMAC Key")
-key_hmac = create_master_key(key_master, "HMAC Key", 1, SHA256)
+key_hmac = create_key(key_master, "HMAC Key", 1, SHA256)
 
