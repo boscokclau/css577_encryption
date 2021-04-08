@@ -22,6 +22,8 @@ SALT_MASTER_KEY = "0ED4AFF74B4C4EE3AD1CF95DDBAF62EE"
 SALT_ENCRYPTION_KEY = "encryption key"
 SALT_HMAC_KEY = "hmac key"
 
+HASH_MODULE = SHA256
+
 ### Check hash_module support
 SUPPORTED_HASH_MODULE = {SHA256: 32, SHA512: 64}
 
@@ -74,15 +76,14 @@ def pad_message(base: bytes, block_length: int, padding: bytes):
     return base
 
 
-hash_module = SHA256
-print("Master Key with ", hash_module)
-key_master = create_key(PASSWORD, SALT_MASTER_KEY, 1000, hash_module)
+print("Master Key with ", HASH_MODULE)
+key_master = create_key(PASSWORD, SALT_MASTER_KEY, 1000, HASH_MODULE)
 
 print("Encryption Key")
-key_encryption = create_key(key_master, SALT_ENCRYPTION_KEY, 1, hash_module)
+key_encryption = create_key(key_master, SALT_ENCRYPTION_KEY, 1, HASH_MODULE)
 
 print("HMAC Key")
-key_hmac = create_key(key_master, SALT_HMAC_KEY, 1, hash_module)
+key_hmac = create_key(key_master, SALT_HMAC_KEY, 1, HASH_MODULE)
 
 print("---------------------------------------------")
 print("Encrypt/Decrypt... key size =", len(key_encryption))
@@ -112,7 +113,7 @@ print("iv_extracted:", iv_extracted)
 
 print("---------------------------------------------")
 print("HMAC to cover IV and encrypted value")
-hmac = HMAC.HMAC(binascii.unhexlify(key_hmac), encrypted_file_with_iv, hash_module)
+hmac = HMAC.HMAC(binascii.unhexlify(key_hmac), encrypted_file_with_iv, HASH_MODULE)
 print(hmac.digest(), "| len =", len(hmac.digest()))
 
 encrypted_file_with_iv_hmac = hmac.digest() + encrypted_file_with_iv
@@ -121,21 +122,21 @@ print(encrypted_file_with_iv_hmac)
 
 print("---------------------------------------------")
 print("Extract hmac")
-hmac_extracted = encrypted_file_with_iv_hmac[:hash_module.digest_size]
+hmac_extracted = encrypted_file_with_iv_hmac[:HASH_MODULE.digest_size]
 print("hmac_extracted:", hmac_extracted)
 
 print("iv + file:")
-iv_plus_file = encrypted_file_with_iv_hmac[hash_module.digest_size:]
+iv_plus_file = encrypted_file_with_iv_hmac[HASH_MODULE.digest_size:]
 print(iv_plus_file)
 print("iv_plus_file == encrypted_file_with_iv:", iv_plus_file == encrypted_file_with_iv)
 
 print("Removing IV")
-iv_removed = encrypted_file_with_iv_hmac[hash_module.digest_size:(hash_module.digest_size + cipher_block_size)]
+iv_removed = encrypted_file_with_iv_hmac[HASH_MODULE.digest_size: (HASH_MODULE.digest_size + cipher_block_size)]
 print("iv_removed:", iv_removed)
 print("iv_removed == iv:", iv_removed == iv)
 
 print("File only")
-file_only = encrypted_file_with_iv_hmac[(hash_module.digest_size + cipher_block_size):]
+file_only = encrypted_file_with_iv_hmac[(HASH_MODULE.digest_size + cipher_block_size):]
 print("file_only:")
 print(file_only)
 print("file_only == encrypted_file:", file_only == encrypted_file)
@@ -155,19 +156,19 @@ print("Read from file:", cipher_to_decrypt)
 print("      Original:", encrypted_file_with_iv_hmac)
 
 print()
-d_hmac = cipher_to_decrypt[:hash_module.digest_size]
+d_hmac = cipher_to_decrypt[:HASH_MODULE.digest_size]
 print("d_hmac:", d_hmac)
 print("  hmac:", hmac.digest())
 print("d_hmac == hmac.digest():", d_hmac == hmac.digest())
 
 print()
-d_iv = cipher_to_decrypt[hash_module.digest_size:(hash_module.digest_size + cipher_block_size)]
+d_iv = cipher_to_decrypt[HASH_MODULE.digest_size: (HASH_MODULE.digest_size + cipher_block_size)]
 print("d_iv:", d_iv)
 print("  iv:", iv)
 print("d_iv == iv:", d_iv == iv)
 
 print()
-file_to_decrypt = cipher_to_decrypt[(hash_module.digest_size + cipher_block_size):]
+file_to_decrypt = cipher_to_decrypt[(HASH_MODULE.digest_size + cipher_block_size):]
 print("file_to_decrypt:", file_to_decrypt)
 print("       Original:", encrypted_file)
 print("file_to_decrypt == encrypted_file", file_to_decrypt == encrypted_file)
