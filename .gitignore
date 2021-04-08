@@ -1,6 +1,13 @@
 # PyCharm
 .idea/
 
+# OSX
+.DS_Store
+
+# Project runtime output
+*.enc
+*decrypted.*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
