@@ -23,6 +23,7 @@ SALT_ENCRYPTION_KEY = "encryption key"
 SALT_HMAC_KEY = "hmac key"
 
 HASH_MODULE = SHA256
+AES_MODE = AES.MODE_CBC
 
 ### Check hash_module support
 SUPPORTED_HASH_MODULE = {SHA256: 32, SHA512: 64}
@@ -77,7 +78,7 @@ def pad_message(base: bytes, block_length: int, padding: bytes):
 
 
 print("Master Key with ", HASH_MODULE)
-key_master = create_key(PASSWORD, SALT_MASTER_KEY, 1000, HASH_MODULE)
+key_master = create_key(PASSWORD, SALT_MASTER_KEY, DEFAULT_ITERATIONS, HASH_MODULE)
 
 print("Encryption Key")
 key_encryption = create_key(key_master, SALT_ENCRYPTION_KEY, 1, HASH_MODULE)
@@ -87,7 +88,7 @@ key_hmac = create_key(key_master, SALT_HMAC_KEY, 1, HASH_MODULE)
 
 print("---------------------------------------------")
 print("Encrypt/Decrypt... key size =", len(key_encryption))
-cipher = AES.new(binascii.unhexlify(key_encryption), AES.MODE_CBC)
+cipher = AES.new(binascii.unhexlify(key_encryption), AES_MODE)
 
 # Generated IV
 iv = cipher.iv
@@ -177,7 +178,37 @@ print()
 print("Cipher text in encrypted file--open file in text editor to compare:")
 print(binascii.hexlify(cipher_text))
 
-cipher = AES.new(binascii.unhexlify(key_encryption), AES.MODE_CBC, d_iv)
+
+print()
+print("---------------------------------------------")
+print("POC Decryption Starts")
+d_salt_master = SALT_MASTER_KEY
+d_salt_decryption = SALT_ENCRYPTION_KEY
+d_salt_hmac = SALT_HMAC_KEY
+d_hash_module = HASH_MODULE
+d_iterations = DEFAULT_ITERATIONS
+d_mode = AES.MODE_CBC
+
+
+d_master_key = create_key(PASSWORD, d_salt_master, d_iterations, d_hash_module)
+print("d_master_key:", d_master_key)
+print("e master_key:", key_master)
+print()
+
+d_decryption_key = create_key(d_master_key, d_salt_decryption, 1, d_hash_module)
+print("d_decryption_key:", d_decryption_key)
+print("e encryption key:", key_encryption)
+print()
+
+d_hmac_key = create_key(key_master, d_salt_hmac, 1, d_hash_module)
+print("d_hmac_key", d_hmac_key)
+print("e hmac_key", key_hmac)
+print()
+
+d_hmac_calculated = HMAC.HMAC(binascii.unhexlify(d_hmac_key), encrypted_file_with_iv, HASH_MODULE).digest()
+print("d_hmac == d_hmac_calculated:", d_hmac == d_hmac_calculated)
+
+cipher = AES.new(binascii.unhexlify(d_decryption_key), d_mode, d_iv)
 decrypted_file = cipher.decrypt(encrypted_file_with_iv_hmac)
 
 with open("ProdComp_decrypted.xlsx", "wb") as df:
