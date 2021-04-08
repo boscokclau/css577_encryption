@@ -18,7 +18,7 @@ from time import time
 DEFAULT_ITERATIONS = 1000
 
 ### Check hash_module support
-SUPPORTED_HASH_MODULE = {SHA256: 16, SHA512: 64}
+SUPPORTED_HASH_MODULE = {SHA256: 32, SHA512: 64}
 
 ### Debugging switch ###
 DEBUG = True
@@ -79,6 +79,8 @@ key_encryption = create_key(key_master, "Encryption Key", 1, SHA256)
 print("HMAC Key")
 key_hmac = create_key(key_master, "HMAC Key", 1, SHA256)
 
+print("---------------------------------------------")
+print("Encrypt/Decrypt... key size =", len(key_encryption))
 cipher = AES.new(binascii.unhexlify(key_encryption), AES.MODE_CBC, b"This is an IV456")
 
 with open("ProdComp.xlsx", "rb") as f:
