@@ -8,6 +8,7 @@ Created on Apr 05, 2021
 
 import binascii
 
+from Crypto.Cipher import AES
 from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Hash import SHA256
 from Crypto.Hash import SHA512
@@ -17,7 +18,7 @@ from time import time
 DEFAULT_ITERATIONS = 1000
 
 ### Check hash_module support
-SUPPORTED_HASH_MODULE = {SHA256: 32, SHA512: 64}
+SUPPORTED_HASH_MODULE = {SHA256: 16, SHA512: 64}
 
 ### Debugging switch ###
 DEBUG = True
@@ -51,9 +52,6 @@ def create_key(secret: str, salt: str, iterations: int, hash_module=SHA256) -> s
 
     key_length = SUPPORTED_HASH_MODULE[hash_module]
 
-    if DEBUG:
-        print(secret, salt, iterations, hash_module)
-
     keys = PBKDF2(secret, salt, key_length, count=iterations, hmac_hash_module=hash_module)
     key = keys[:key_length]
 
@@ -65,6 +63,12 @@ def create_key(secret: str, salt: str, iterations: int, hash_module=SHA256) -> s
     return key
 
 
+def pad_message(base: bytes, block_length: int, padding: bytes):
+    while len(base) % block_length != 0:
+        base += padding
+    return base
+
+
 print("SHA256")
 print("Master Key")
 key_master = create_key("password", "0ED4AFF74B4C4EE3AD1CF95DDBAF62EE", 1000, SHA256)
@@ -74,3 +78,23 @@ key_encryption = create_key(key_master, "Encryption Key", 1, SHA256)
 
 print("HMAC Key")
 key_hmac = create_key(key_master, "HMAC Key", 1, SHA256)
+
+cipher = AES.new(binascii.unhexlify(key_encryption), AES.MODE_CBC, b"This is an IV456")
+
+with open("ProdComp.xlsx", "rb") as f:
+    file_to_encrypt = f.read()
+
+padded_file = pad_message(file_to_encrypt, 16, b"0")
+encrypted_file = cipher.encrypt(padded_file)
+
+with open("ProdComp.xlsx.enc", "wb") as ef:
+    ef.write(encrypted_file)
+
+with open("ProdComp.xlsx.enc", "rb") as f2d:
+    file_to_decrypt = f2d.read()
+
+cipher = AES.new(binascii.unhexlify(key_encryption), AES.MODE_CBC, b"This is an IV456")
+decrypted_file = cipher.decrypt(file_to_decrypt)
+
+with open("ProdComp_decrypted.xlsx", "wb") as df:
+    df.write(decrypted_file.rstrip(b"0"))
