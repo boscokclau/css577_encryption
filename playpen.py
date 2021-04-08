@@ -26,7 +26,7 @@ HASH_MODULE = SHA256
 AES_MODE = AES.MODE_CBC
 
 ### Check hash_module support
-SUPPORTED_HASH_MODULE = {SHA256: 32, SHA512: 64}
+SUPPORTED_HASH_MODULE = {SHA256: 16, SHA512: 32}
 
 ### Debugging switch ###
 DEBUG = True
@@ -63,12 +63,15 @@ def create_key(secret: str, salt: str, iterations: int, hash_module=SHA256) -> s
     keys = PBKDF2(secret, salt, key_length, count=iterations, hmac_hash_module=hash_module)
     key = keys[:key_length]
 
-    key = binascii.hexlify(key).decode()
+    key_decoded = binascii.hexlify(key).decode()
 
     if DEBUG:
-        print("key: ", key)
+        print("keys", keys)
+        print("key_length configured:", key_length)
+        print("key: ", key, "|", len(key))
+        print("key_decoded: ", key_decoded, "|", len(key_decoded))
 
-    return key
+    return key_decoded
 
 
 def pad_message(base: bytes, block_length: int, padding: bytes):
