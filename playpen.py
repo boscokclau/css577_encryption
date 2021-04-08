@@ -33,10 +33,10 @@ SUPPORTED_HASH_MODULE = {SHA256: 16, SHA512: 32}
 DEBUG = True
 
 
-def timing(f):
+def timing(fn):
     def wrapper(*args, **kwargs):
         start = time()
-        result = f(*args, **kwargs)
+        result = fn(*args, **kwargs)
         end = time()
         print("Time spent =", end - start)
         print("Throughput = ", 1 / (end - start))
