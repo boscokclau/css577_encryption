@@ -17,6 +17,10 @@ from time import time
 
 ### Global Constants ###
 DEFAULT_ITERATIONS = 1000
+PASSWORD = "password"
+SALT_MASTER_KEY = "0ED4AFF74B4C4EE3AD1CF95DDBAF62EE"
+SALT_ENCRYPTION_KEY = "encryption key"
+SALT_HMAC_KEY = "hmac key"
 
 ### Check hash_module support
 SUPPORTED_HASH_MODULE = {SHA256: 32, SHA512: 64}
@@ -72,13 +76,13 @@ def pad_message(base: bytes, block_length: int, padding: bytes):
 
 hash_module = SHA256
 print("Master Key with ", hash_module)
-key_master = create_key("password", "0ED4AFF74B4C4EE3AD1CF95DDBAF62EE", 1000, hash_module)
+key_master = create_key(PASSWORD, SALT_MASTER_KEY, 1000, hash_module)
 
 print("Encryption Key")
-key_encryption = create_key(key_master, "Encryption Key", 1, hash_module)
+key_encryption = create_key(key_master, SALT_ENCRYPTION_KEY, 1, hash_module)
 
 print("HMAC Key")
-key_hmac = create_key(key_master, "HMAC Key", 1, hash_module)
+key_hmac = create_key(key_master, SALT_HMAC_KEY, 1, hash_module)
 
 print("---------------------------------------------")
 print("Encrypt/Decrypt... key size =", len(key_encryption))
@@ -136,7 +140,6 @@ print("file_only:")
 print(file_only)
 print("file_only == encrypted_file:", file_only == encrypted_file)
 
-
 print("---------------------------------------------")
 print("Encrypt/decrypt")
 cipher_text = encrypted_file_with_iv_hmac
@@ -148,30 +151,29 @@ with open("ProdComp.xlsx.enc", "rb") as f2d:
     cipher_to_decrypt = f2d.read()
 
 print("Retrieved:", cipher_to_decrypt == encrypted_file_with_iv_hmac)
-print(cipher_to_decrypt)
-print(encrypted_file_with_iv_hmac)
+print("Read from file:", cipher_to_decrypt)
+print("      Original:", encrypted_file_with_iv_hmac)
+
+print()
 d_hmac = cipher_to_decrypt[:hash_module.digest_size]
-print("d_hmac:")
-print(d_hmac)
-print(hmac.digest())
-print(d_hmac == hmac.digest())
+print("d_hmac:", d_hmac)
+print("  hmac:", hmac.digest())
+print("d_hmac == hmac.digest():", d_hmac == hmac.digest())
 
 print()
 d_iv = cipher_to_decrypt[hash_module.digest_size:(hash_module.digest_size + cipher_block_size)]
-print("d_iv:")
-print(d_iv)
-print(iv)
-print(d_iv == iv)
+print("d_iv:", d_iv)
+print("  iv:", iv)
+print("d_iv == iv:", d_iv == iv)
 
 print()
 file_to_decrypt = cipher_to_decrypt[(hash_module.digest_size + cipher_block_size):]
-print("file_to_decrypt:")
-print(file_to_decrypt)
-print(encrypted_file)
-print(file_to_decrypt == encrypted_file)
+print("file_to_decrypt:", file_to_decrypt)
+print("       Original:", encrypted_file)
+print("file_to_decrypt == encrypted_file", file_to_decrypt == encrypted_file)
 
 print()
-print("Cipher text in encrypted file:")
+print("Cipher text in encrypted file--open file in text editor to compare:")
 print(binascii.hexlify(cipher_text))
 
 cipher = AES.new(binascii.unhexlify(key_encryption), AES.MODE_CBC, d_iv)
@@ -179,4 +181,3 @@ decrypted_file = cipher.decrypt(encrypted_file_with_iv_hmac)
 
 with open("ProdComp_decrypted.xlsx", "wb") as df:
     df.write(decrypted_file.rstrip(b"0"))
-
