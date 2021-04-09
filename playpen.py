@@ -68,8 +68,8 @@ def timing(fn):
         start = time()
         result = fn(*args, **kwargs)
         end = time()
-        print("Time spent =", end - start)
-        print("Throughput = ", 1 / (end - start))
+        print("Time spent =", end - start, "secs")
+        print("Throughput = ", 1 / (end - start), "/sec")
         return result
 
     return wrapper
