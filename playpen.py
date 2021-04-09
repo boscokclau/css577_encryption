@@ -40,7 +40,18 @@ DES3WithSHA256 = {NAME: "DES3WithSHA256", CIPHER: AES, KEY_LENGTH_IN_BYTES: 24, 
 DES3WithSHA512 = {NAME: "DES3WithSHA512", CIPHER: AES, KEY_LENGTH_IN_BYTES: 24, HASH_ALGORITHM: SHA256}
 
 ### Operation configurations
-SCHEME = AES256WithSHA512
+SCHEME = AES128WithSHA256
+
+"""
+FILE_TO_ENCRYPT = "TestFile2.png"
+FILE_ENC = "TestFile2.png.enc"
+FILE_DEC = "TestFile2_decrypted.png"
+
+"""
+FILE_TO_ENCRYPT = "ProdComp.xlsx"
+FILE_ENC = "ProdComp.xlsx.enc"
+FILE_DEC = "ProdComp_decrypted.xlsx"
+
 
 cipher = SCHEME[CIPHER]
 op_mode = SCHEME[CIPHER].MODE_CBC
@@ -130,7 +141,7 @@ print("iv to record:", iv)
 
 print("iv length:", len(iv))
 
-with open("ProdComp.xlsx", "rb") as f:
+with open(FILE_TO_ENCRYPT, "rb") as f:
     file_to_encrypt = f.read()
 
 padded_file = pad_message(file_to_encrypt, 16, b"0")
@@ -177,13 +188,13 @@ print(file_only)
 print("file_only == encrypted_file:", file_only == encrypted_file)
 
 print("---------------------------------------------")
-print("Encrypt/decrypt")
+print("Decrypt")
 cipher_text = encrypted_file_with_iv_hmac
 
-with open("ProdComp.xlsx.enc", "wb") as ef:
+with open(FILE_ENC, "wb") as ef:
     ef.write(cipher_text)
 
-with open("ProdComp.xlsx.enc", "rb") as f2d:
+with open(FILE_ENC, "rb") as f2d:
     cipher_to_decrypt = f2d.read()
 
 print("Retrieved:", cipher_to_decrypt == encrypted_file_with_iv_hmac)
@@ -233,18 +244,19 @@ print("d_decryption_key:", d_decryption_key)
 print("e encryption key:", key_encryption)
 print()
 
-d_hmac_key = create_key(key_master, d_salt_hmac, 1, d_key_length, d_hash_module)
+d_hmac_key = create_key(d_master_key, d_salt_hmac, 1, d_key_length, d_hash_module)
 print("d_hmac_key", d_hmac_key)
 print("e hmac_key", key_hmac)
 print()
 
-d_hmac_calculated = HMAC.HMAC(binascii.unhexlify(d_hmac_key), encrypted_file_with_iv, d_hash_module)
-print("d_hmac == d_hmac_calculated:", d_hmac == d_hmac_calculated)
+d_hmac_calculated = HMAC.HMAC(binascii.unhexlify(d_hmac_key), d_iv + file_to_decrypt, d_hash_module)
+print("d_hmac == d_hmac_calculated:", d_hmac == d_hmac_calculated.digest())
+print("Are files equal:", d_iv + file_to_decrypt == encrypted_file_with_iv)
 
 d_cipher = cipher.new(key=binascii.unhexlify(d_decryption_key), mode=d_mode, iv=d_iv)
-decrypted_file = d_cipher.decrypt(encrypted_file_with_iv_hmac)
+decrypted_file = d_cipher.decrypt(file_to_decrypt)
 
-with open("ProdComp_decrypted.xlsx", "wb") as df:
+with open(FILE_DEC, "wb") as df:
     df.write(decrypted_file.rstrip(b"0"))
 
 print()
