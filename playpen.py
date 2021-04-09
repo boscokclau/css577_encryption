@@ -10,10 +10,12 @@ import binascii
 
 from Crypto.Cipher import AES
 from Crypto.Cipher import DES3
-from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Hash import HMAC
 from Crypto.Hash import SHA256
 from Crypto.Hash import SHA512
+from Crypto.Protocol.KDF import PBKDF2
+from Crypto.Util.Padding import pad
+from Crypto.Util.Padding import unpad
 from time import time
 
 ### Global Constants ###
@@ -25,22 +27,29 @@ SALT_HMAC_KEY = "hmac key"
 NON_AUTOGEN_IV = None
 
 ### Cipher Suites
+BLOCK_SIZE_IN_BYTES = "block_size_in_bytes"
 CIPHER = "cipher"
 KEY_LENGTH_IN_BYTES = "key_length_in_bytes"
 HASH_ALGORITHM = "hash_algorithm"
-NAME = "NAME"
+NAME = "name"
 
-AES128WithSHA256 = {NAME: "AES128WithSHA256", CIPHER: AES, KEY_LENGTH_IN_BYTES: 16, HASH_ALGORITHM: SHA256}
-AES128WithSHA512 = {NAME: "AES128WithSHA512", CIPHER: AES, KEY_LENGTH_IN_BYTES: 16, HASH_ALGORITHM: SHA512}
+AES128WithSHA256 = {NAME: "AES128WithSHA256", CIPHER: AES, KEY_LENGTH_IN_BYTES: 16, HASH_ALGORITHM: SHA256,
+                    BLOCK_SIZE_IN_BYTES: 16}
+AES128WithSHA512 = {NAME: "AES128WithSHA512", CIPHER: AES, KEY_LENGTH_IN_BYTES: 16, HASH_ALGORITHM: SHA512,
+                    BLOCK_SIZE_IN_BYTES: 16}
 
-AES256WithSHA256 = {NAME: "AES256WithSHA256", CIPHER: AES, KEY_LENGTH_IN_BYTES: 32, HASH_ALGORITHM: SHA256}
-AES256WithSHA512 = {NAME: "AES256WithSHA512", CIPHER: AES, KEY_LENGTH_IN_BYTES: 32, HASH_ALGORITHM: SHA512}
+AES256WithSHA256 = {NAME: "AES256WithSHA256", CIPHER: AES, KEY_LENGTH_IN_BYTES: 32, HASH_ALGORITHM: SHA256,
+                    BLOCK_SIZE_IN_BYTES: 16}
+AES256WithSHA512 = {NAME: "AES256WithSHA512", CIPHER: AES, KEY_LENGTH_IN_BYTES: 32, HASH_ALGORITHM: SHA512,
+                    BLOCK_SIZE_IN_BYTES: 16}
 
-DES3WithSHA256 = {NAME: "DES3WithSHA256", CIPHER: AES, KEY_LENGTH_IN_BYTES: 24, HASH_ALGORITHM: SHA256}
-DES3WithSHA512 = {NAME: "DES3WithSHA512", CIPHER: AES, KEY_LENGTH_IN_BYTES: 24, HASH_ALGORITHM: SHA256}
+DES3WithSHA256 = {NAME: "DES3WithSHA256", CIPHER: DES3, KEY_LENGTH_IN_BYTES: 24, HASH_ALGORITHM: SHA256,
+                  BLOCK_SIZE_IN_BYTES: 8}
+DES3WithSHA512 = {NAME: "DES3WithSHA512", CIPHER: DES3, KEY_LENGTH_IN_BYTES: 24, HASH_ALGORITHM: SHA256,
+                  BLOCK_SIZE_IN_BYTES: 8}
 
 ### Operation configurations
-SCHEME = AES128WithSHA256
+scheme = DES3WithSHA512
 
 """
 FILE_TO_ENCRYPT = "TestFile2.png"
@@ -52,9 +61,8 @@ FILE_TO_ENCRYPT = "ProdComp.xlsx"
 FILE_ENC = "ProdComp.xlsx.enc"
 FILE_DEC = "ProdComp_decrypted.xlsx"
 
-
-cipher = SCHEME[CIPHER]
-op_mode = SCHEME[CIPHER].MODE_CBC
+cipher = scheme[CIPHER]
+op_mode = scheme[CIPHER].MODE_CBC
 
 ### Check hash_module support
 SUPPORTED_HASH_MODULE = [SHA256, SHA512, DES3]
@@ -106,15 +114,19 @@ def create_key(secret: str, salt: str, iterations: int, key_length: int = DEFAUL
     return key_decoded
 
 
-def pad_message(base: bytes, block_length: int, padding: bytes):
-    while len(base) % block_length != 0:
-        base += padding
-    return base
+def pad_message(base: bytes, block_length: int, style: str = "pkcs7"):
+    val = pad(base, block_length, style)
+    return val
 
 
-print("Master Key with ", SCHEME[NAME])
-scheme_key_length = SCHEME[KEY_LENGTH_IN_BYTES]
-hash_algorithm = SCHEME[HASH_ALGORITHM]
+def unpad_message(base: bytes, block_length: int, style: str = "pkcs7"):
+    val = unpad(base, block_length, style)
+    return val
+
+
+print("Master Key with ", scheme[NAME])
+scheme_key_length = scheme[KEY_LENGTH_IN_BYTES]
+hash_algorithm = scheme[HASH_ALGORITHM]
 
 key_master = create_key(PASSWORD, SALT_MASTER_KEY, DEFAULT_ITERATIONS, scheme_key_length, hash_algorithm)
 print("key_master:", key_master, "|", len(key_master) * 4, "bits")
@@ -144,7 +156,7 @@ print("iv length:", len(iv))
 with open(FILE_TO_ENCRYPT, "rb") as f:
     file_to_encrypt = f.read()
 
-padded_file = pad_message(file_to_encrypt, 16, b"0")
+padded_file = pad_message(file_to_encrypt, scheme[BLOCK_SIZE_IN_BYTES])
 encrypted_file = e_cipher.encrypt(padded_file)
 
 print("Encrypted file BEFORE prepending IV:\n", encrypted_file)
@@ -208,7 +220,7 @@ print("  hmac:", hmac.digest())
 print("d_hmac == hmac.digest():", d_hmac == hmac.digest())
 
 print()
-d_iv = cipher_to_decrypt[SCHEME[HASH_ALGORITHM].digest_size: (hash_algorithm.digest_size + cipher_block_size)]
+d_iv = cipher_to_decrypt[scheme[HASH_ALGORITHM].digest_size: (hash_algorithm.digest_size + cipher_block_size)]
 print("d_iv:", d_iv)
 print("  iv:", iv)
 print("d_iv == iv:", d_iv == iv)
@@ -256,10 +268,15 @@ print("Are files equal:", d_iv + file_to_decrypt == encrypted_file_with_iv)
 d_cipher = cipher.new(key=binascii.unhexlify(d_decryption_key), mode=d_mode, iv=d_iv)
 decrypted_file = d_cipher.decrypt(file_to_decrypt)
 
+print("Padded file :", decrypted_file, "|", len(decrypted_file))
+print("  Orig file :", file_to_encrypt, "|", len(file_to_encrypt))
+
+decrypted_file = unpad_message(decrypted_file, scheme[BLOCK_SIZE_IN_BYTES])
+print(decrypted_file)
+
 with open(FILE_DEC, "wb") as df:
-    df.write(decrypted_file.rstrip(b"0"))
+    df.write(decrypted_file)
 
 print()
 print("Encryption/Decryption ends using:")
-print("CIPHER:", CIPHER)
-print("Scheme:", SCHEME)
+print("Scheme:", scheme)
