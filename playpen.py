@@ -42,8 +42,7 @@ DES3WithSHA512 = {NAME: "DES3WithSHA512", CIPHER: AES, KEY_LENGTH_IN_BYTES: 24, 
 ### Operation configurations
 CIPHER = AES
 OP_MODE = CIPHER.MODE_CBC
-SCHEME = DES3WithSHA512
-
+SCHEME = AES128WithSHA512
 
 ### Check hash_module support
 SUPPORTED_HASH_MODULE = [SHA256, SHA512, DES3]
@@ -65,23 +64,23 @@ def timing(fn):
 
 
 @timing
-def create_key(secret: str, salt: str, iterations: int, scheme: dict) -> str:
+def create_key(secret: str, salt: str, iterations: int, key_length: int = DEFAULT_ITERATIONS,
+               hash_module=SHA256) -> str:
     """
         Return a master key derived from secret with parameters specified. Internally, it is using PBKDF2 from Cryptodome.
-    :param scheme:
+
     :param secret: The secret from which the returning key is derived.
     :param salt: Salt used to derive the key
-    :param iterations: Number of iterations. Default to 1000
+    :param iterations: Number of iterations
+    :param key_length:
+    :param hash_module:
     :return:
     """
-
-    key_length = scheme[KEY_LENGTH_IN_BYTES]
-    hash_module = scheme[HASH_ALGORITHM]
 
     if hash_module not in SUPPORTED_HASH_MODULE:
         raise ValueError("Unsupported hashing algorithm.")
 
-    keys = PBKDF2(secret, salt, key_length, count=iterations, hmac_hash_module=hash_module)
+    keys = PBKDF2(secret, salt.encode(), key_length, count=iterations, hmac_hash_module=hash_module)
     key = keys[:key_length]
 
     key_decoded = binascii.hexlify(key).decode()
@@ -102,13 +101,16 @@ def pad_message(base: bytes, block_length: int, padding: bytes):
 
 
 print("Master Key with ", SCHEME[NAME])
-key_master = create_key(PASSWORD, SALT_MASTER_KEY, DEFAULT_ITERATIONS, SCHEME)
+scheme_key_length = SCHEME[KEY_LENGTH_IN_BYTES]
+hash_algorithm = SCHEME[HASH_ALGORITHM]
+
+key_master = create_key(PASSWORD, SALT_MASTER_KEY, DEFAULT_ITERATIONS, scheme_key_length, hash_algorithm)
 
 print("Encryption Key")
-key_encryption = create_key(key_master, SALT_ENCRYPTION_KEY, 1, SCHEME)
+key_encryption = create_key(key_master, SALT_ENCRYPTION_KEY, 1, scheme_key_length, hash_algorithm)
 
 print("HMAC Key")
-key_hmac = create_key(key_master, SALT_HMAC_KEY, 1, SCHEME)
+key_hmac = create_key(key_master, SALT_HMAC_KEY, 1, scheme_key_length, hash_algorithm)
 
 print("---------------------------------------------")
 print("Encrypt/Decrypt... key size =", len(key_encryption))
@@ -138,7 +140,7 @@ print("iv_extracted:", iv_extracted)
 
 print("---------------------------------------------")
 print("HMAC to cover IV and encrypted value")
-hmac = HMAC.HMAC(binascii.unhexlify(key_hmac), encrypted_file_with_iv, SCHEME[HASH_ALGORITHM])
+hmac = HMAC.HMAC(binascii.unhexlify(key_hmac), encrypted_file_with_iv, hash_algorithm)
 print(hmac.digest(), "| len =", len(hmac.digest()))
 
 encrypted_file_with_iv_hmac = hmac.digest() + encrypted_file_with_iv
@@ -147,21 +149,21 @@ print(encrypted_file_with_iv_hmac)
 
 print("---------------------------------------------")
 print("Extract hmac")
-hmac_extracted = encrypted_file_with_iv_hmac[:SCHEME[HASH_ALGORITHM].digest_size]
+hmac_extracted = encrypted_file_with_iv_hmac[:hash_algorithm.digest_size]
 print("hmac_extracted:", hmac_extracted)
 
 print("iv + file:")
-iv_plus_file = encrypted_file_with_iv_hmac[SCHEME[HASH_ALGORITHM].digest_size:]
+iv_plus_file = encrypted_file_with_iv_hmac[hash_algorithm.digest_size:]
 print(iv_plus_file)
 print("iv_plus_file == encrypted_file_with_iv:", iv_plus_file == encrypted_file_with_iv)
 
 print("Removing IV")
-iv_removed = encrypted_file_with_iv_hmac[SCHEME[HASH_ALGORITHM].digest_size: (SCHEME[HASH_ALGORITHM].digest_size + cipher_block_size)]
+iv_removed = encrypted_file_with_iv_hmac[hash_algorithm.digest_size: (hash_algorithm.digest_size + cipher_block_size)]
 print("iv_removed:", iv_removed)
 print("iv_removed == iv:", iv_removed == iv)
 
 print("File only")
-file_only = encrypted_file_with_iv_hmac[(SCHEME[HASH_ALGORITHM].digest_size + cipher_block_size):]
+file_only = encrypted_file_with_iv_hmac[(hash_algorithm.digest_size + cipher_block_size):]
 print("file_only:")
 print(file_only)
 print("file_only == encrypted_file:", file_only == encrypted_file)
@@ -181,19 +183,19 @@ print("Read from file:", cipher_to_decrypt)
 print("      Original:", encrypted_file_with_iv_hmac)
 
 print()
-d_hmac = cipher_to_decrypt[:SCHEME[HASH_ALGORITHM].digest_size]
+d_hmac = cipher_to_decrypt[:hash_algorithm.digest_size]
 print("d_hmac:", d_hmac)
 print("  hmac:", hmac.digest())
 print("d_hmac == hmac.digest():", d_hmac == hmac.digest())
 
 print()
-d_iv = cipher_to_decrypt[SCHEME[HASH_ALGORITHM].digest_size: (SCHEME[HASH_ALGORITHM].digest_size + cipher_block_size)]
+d_iv = cipher_to_decrypt[SCHEME[HASH_ALGORITHM].digest_size: (hash_algorithm.digest_size + cipher_block_size)]
 print("d_iv:", d_iv)
 print("  iv:", iv)
 print("d_iv == iv:", d_iv == iv)
 
 print()
-file_to_decrypt = cipher_to_decrypt[(SCHEME[HASH_ALGORITHM].digest_size + cipher_block_size):]
+file_to_decrypt = cipher_to_decrypt[(hash_algorithm.digest_size + cipher_block_size):]
 print("file_to_decrypt:", file_to_decrypt)
 print("       Original:", encrypted_file)
 print("file_to_decrypt == encrypted_file", file_to_decrypt == encrypted_file)
@@ -208,26 +210,27 @@ print("POC Decryption Starts")
 d_salt_master = SALT_MASTER_KEY
 d_salt_decryption = SALT_ENCRYPTION_KEY
 d_salt_hmac = SALT_HMAC_KEY
-d_hash_module = SCHEME[HASH_ALGORITHM]
+d_hash_module = hash_algorithm
 d_iterations = DEFAULT_ITERATIONS
+d_key_length = scheme_key_length
 d_mode = OP_MODE
 
-d_master_key = create_key(PASSWORD, d_salt_master, d_iterations, SCHEME)
+d_master_key = create_key(PASSWORD, d_salt_master, d_iterations, d_key_length, d_hash_module)
 print("d_master_key:", d_master_key)
 print("e master_key:", key_master)
 print()
 
-d_decryption_key = create_key(d_master_key, d_salt_decryption, 1, SCHEME)
+d_decryption_key = create_key(d_master_key, d_salt_decryption, 1, d_key_length, d_hash_module)
 print("d_decryption_key:", d_decryption_key)
 print("e encryption key:", key_encryption)
 print()
 
-d_hmac_key = create_key(key_master, d_salt_hmac, 1, SCHEME)
+d_hmac_key = create_key(key_master, d_salt_hmac, 1, d_key_length, d_hash_module)
 print("d_hmac_key", d_hmac_key)
 print("e hmac_key", key_hmac)
 print()
 
-d_hmac_calculated = HMAC.HMAC(binascii.unhexlify(d_hmac_key), encrypted_file_with_iv, SCHEME[HASH_ALGORITHM]).digest()
+d_hmac_calculated = HMAC.HMAC(binascii.unhexlify(d_hmac_key), encrypted_file_with_iv, d_hash_module)
 print("d_hmac == d_hmac_calculated:", d_hmac == d_hmac_calculated)
 
 cipher = CIPHER.new(key=binascii.unhexlify(d_decryption_key), mode=d_mode, iv=d_iv)
