@@ -40,9 +40,10 @@ DES3WithSHA256 = {NAME: "DES3WithSHA256", CIPHER: AES, KEY_LENGTH_IN_BYTES: 24, 
 DES3WithSHA512 = {NAME: "DES3WithSHA512", CIPHER: AES, KEY_LENGTH_IN_BYTES: 24, HASH_ALGORITHM: SHA256}
 
 ### Operation configurations
-CIPHER = AES
-OP_MODE = CIPHER.MODE_CBC
-SCHEME = AES128WithSHA512
+SCHEME = AES256WithSHA512
+
+cipher = SCHEME[CIPHER]
+op_mode = SCHEME[CIPHER].MODE_CBC
 
 ### Check hash_module support
 SUPPORTED_HASH_MODULE = [SHA256, SHA512, DES3]
@@ -120,11 +121,11 @@ print()
 
 print("---------------------------------------------")
 print("Encrypt/Decrypt... key size =", len(key_encryption))
-cipher = CIPHER.new(key=binascii.unhexlify(key_encryption), mode=OP_MODE, iv=NON_AUTOGEN_IV)
+e_cipher = cipher.new(key=binascii.unhexlify(key_encryption), mode=op_mode, iv=NON_AUTOGEN_IV)
 
 # Generated IV
-iv = cipher.iv
-print("cipher.iv", "|", cipher.iv, "|", binascii.hexlify(cipher.iv), binascii.hexlify(cipher.iv).decode())
+iv = e_cipher.iv
+print("e_cipher.iv", "|", e_cipher.iv, "|", binascii.hexlify(e_cipher.iv), binascii.hexlify(e_cipher.iv).decode())
 print("iv to record:", iv)
 
 print("iv length:", len(iv))
@@ -133,14 +134,15 @@ with open("ProdComp.xlsx", "rb") as f:
     file_to_encrypt = f.read()
 
 padded_file = pad_message(file_to_encrypt, 16, b"0")
-encrypted_file = cipher.encrypt(padded_file)
+encrypted_file = e_cipher.encrypt(padded_file)
+
 print("Encrypted file BEFORE prepending IV:\n", encrypted_file)
 encrypted_file_with_iv = iv + encrypted_file
 print("Encrypted file AFTER prepending IV:\n", encrypted_file_with_iv)
 
 print("---------------------------------------------")
 print("Extract IV")
-cipher_block_size = CIPHER.block_size
+cipher_block_size = cipher.block_size
 iv_extracted = encrypted_file[:cipher_block_size]
 print("iv_extracted:", iv_extracted)
 
@@ -219,7 +221,7 @@ d_salt_hmac = SALT_HMAC_KEY
 d_hash_module = hash_algorithm
 d_iterations = DEFAULT_ITERATIONS
 d_key_length = scheme_key_length
-d_mode = OP_MODE
+d_mode = op_mode
 
 d_master_key = create_key(PASSWORD, d_salt_master, d_iterations, d_key_length, d_hash_module)
 print("d_master_key:", d_master_key)
@@ -239,8 +241,8 @@ print()
 d_hmac_calculated = HMAC.HMAC(binascii.unhexlify(d_hmac_key), encrypted_file_with_iv, d_hash_module)
 print("d_hmac == d_hmac_calculated:", d_hmac == d_hmac_calculated)
 
-cipher = CIPHER.new(key=binascii.unhexlify(d_decryption_key), mode=d_mode, iv=d_iv)
-decrypted_file = cipher.decrypt(encrypted_file_with_iv_hmac)
+d_cipher = cipher.new(key=binascii.unhexlify(d_decryption_key), mode=d_mode, iv=d_iv)
+decrypted_file = d_cipher.decrypt(encrypted_file_with_iv_hmac)
 
 with open("ProdComp_decrypted.xlsx", "wb") as df:
     df.write(decrypted_file.rstrip(b"0"))
