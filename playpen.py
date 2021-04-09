@@ -86,10 +86,10 @@ def create_key(secret: str, salt: str, iterations: int, key_length: int = DEFAUL
     key_decoded = binascii.hexlify(key).decode()
 
     if DEBUG:
-        print("keys", keys, "|", len(keys))
+        # print("keys", keys, "|", len(keys))
         print("key_length configured:", key_length)
         print("key: ", key, "|", len(key))
-        print("key_decoded: ", key_decoded, "|", len(key_decoded))
+        print("key_decoded: ", key_decoded, "|", len(key_decoded) * 4, "bits")
 
     return key_decoded
 
@@ -105,12 +105,18 @@ scheme_key_length = SCHEME[KEY_LENGTH_IN_BYTES]
 hash_algorithm = SCHEME[HASH_ALGORITHM]
 
 key_master = create_key(PASSWORD, SALT_MASTER_KEY, DEFAULT_ITERATIONS, scheme_key_length, hash_algorithm)
+print("key_master:", key_master, "|", len(key_master) * 4, "bits")
+print()
 
 print("Encryption Key")
 key_encryption = create_key(key_master, SALT_ENCRYPTION_KEY, 1, scheme_key_length, hash_algorithm)
+print("key_encryption:", key_encryption, "|", len(key_encryption) * 4, "bits")
+print()
 
 print("HMAC Key")
 key_hmac = create_key(key_master, SALT_HMAC_KEY, 1, scheme_key_length, hash_algorithm)
+print("key_hmac:", key_hmac, "|", len(key_hmac) * 4, "bits")
+print()
 
 print("---------------------------------------------")
 print("Encrypt/Decrypt... key size =", len(key_encryption))
