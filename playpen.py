@@ -19,7 +19,7 @@ from Crypto.Util.Padding import unpad
 from time import time
 
 ### Global Constants ###
-DEFAULT_ITERATIONS = 1000
+DEFAULT_ITERATIONS = 1000000
 PASSWORD = "password"
 SALT_MASTER_KEY = "0ED4AFF74B4C4EE3AD1CF95DDBAF62EE"
 SALT_ENCRYPTION_KEY = "encryption key"
@@ -49,7 +49,7 @@ DES3WithSHA512 = {NAME: "DES3WithSHA512", CIPHER: DES3, KEY_LENGTH_IN_BYTES: 24,
                   BLOCK_SIZE_IN_BYTES: 8}
 
 ### Operation configurations
-scheme = DES3WithSHA512
+scheme = AES128WithSHA512
 
 """
 FILE_TO_ENCRYPT = "TestFile2.png"
