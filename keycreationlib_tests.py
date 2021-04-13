@@ -1,6 +1,6 @@
 import unittest
 
-from encryptionlib import *
+from keycreationlib import *
 
 # Constants
 SECRET = "secret"
