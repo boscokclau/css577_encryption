@@ -5,7 +5,7 @@ Created on Apr 11, 2021
 """
 import unittest
 
-from ciphershemes import *
+from encschemeconfig import *
 
 AES128WithSHA256 = "AES128WithSHA256"
 AES128WithSHA512 = "AES128WithSHA512"

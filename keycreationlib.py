@@ -38,7 +38,7 @@ from config import *
 from Crypto.Protocol.KDF import PBKDF2
 from metricsutil import timing
 
-from ciphershemes import *
+from encschemeconfig import *
 
 ### Debugging switch ###
 DEBUG = True
