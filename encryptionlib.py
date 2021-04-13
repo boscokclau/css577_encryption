@@ -103,5 +103,3 @@ def create_key_with_pbkdf2(secret: str, salt: str, iterations: int, key_length: 
 
     return key
 
-
-print(create_master_key("password", "salt", 1000000, 32, "sha512", "pbkdf2"))
