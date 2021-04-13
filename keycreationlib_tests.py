@@ -1,23 +1,7 @@
 import unittest
 
 from keycreationlib import *
-
-# Constants
-SECRET = "secret"
-SALT = "salt"
-ITERATIONS = "iterations"
-KEY_LENGTH = "key_length"
-HMAC_HASH = "hmac_hash"
-KDF = "kdf"
-KEY = "KEY"
-
-# Expects
-NONE_EXCEPTION_CLASS_EXPECT = None
-NONE_EX_MSG = None
-
-# This value is obtained from https://neurotechnics.com/tools/pbkdf2-test as the base value for all verifications.
-BASE_KEY = "632c2812e46d4604102ba7618e9d6d7d2f8128f6266b4a03264d2a0460b7dcb3"
-
+from keycreationlib_tests_constants import *
 
 ########################################################################################################################
 ## Tests: create_key_with_pbkdf2
@@ -147,7 +131,7 @@ class CreateMasterKey(unittest.TestCase):
 
 
 ########################################################################################################################
-## Maih
+## Main
 ########################################################################################################################
 if __name__ == '__main__':
     unittest.main()
