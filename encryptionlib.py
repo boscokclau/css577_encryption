@@ -7,52 +7,101 @@ Created on Apr 05, 2021
 """
 
 import binascii
+import Crypto.Hash.SHA256
+import Crypto.Hash.SHA512
 
 from Crypto.Protocol.KDF import PBKDF2
-from Crypto.Hash import SHA256
-from Crypto.Hash import SHA512
 
-### Global Constants ###
-DEFAULT_ITERATIONS = 1000
-
-### Check hash_module support
-SUPPORTED_HASH_MODULE = {SHA256: 32, SHA512: 64}
+from metricsutil import timing
 
 ### Debugging switch ###
 DEBUG = True
 
+### Constants
+KDF_PBKDF2 = "pbkdf2"
 
-def create_master_key(secret: str, salt: str, iterations: int, hash_module=SHA256) -> str:
+### Reference Data
+pbkdf2_hmac_hash_modules = {"sha256": Crypto.Hash.SHA256, "sha512": Crypto.Hash.SHA512}
+
+
+########################################################################################################################
+## Public APIs
+##  APIs for applicagtion use. These APIs are agnostic to KDF implementations, hence hmac_hash and kdf are indicated by
+##  str type so the selection of the actual implementation module is deferred to the corresponding methods in the
+##  KDF specific implementation section
+########################################################################################################################
+@timing
+def create_master_key(secret: str, salt: str, iterations: int = 1000, key_length: int = 32,
+                      hamc_hash: str = "sha256", kdf="pbkdf2") -> str:
     """
-        Return a master key derived from secret with parameters specified. Internally, it is using PBKDF2 from Cryptodome.
-    :param secret: The secret from which the returning key is derived.
-    :param salt: Salt used to derive the key
-    :param iterations: Number of iterations. Default to 1000
-    :param key_length: Key length to create. Default to 32
-    :param hash_module: Hash algorithm to use. Default to SHA256 (in Crypto.Hash from Cryptodome)
-    :return:
+        Create a master key from the secret and salt, with  operation parameters.
+    :param secret: The secret, which can be password, pass-phrase, etc using which to create a master key for
+                   subsequent key generations.
+    :param salt: The salt used to generate the key.
+    :param iterations: Number of iterations running the KDF. Default to 1000.
+    :param key_length: Length of key being generated. Default to 32 bytes.
+    :param hamc_hash: HMAC-Hash to use. Note that this is a string indicating the hash to use. Underlying implementation
+                      per kdf will pick the corresponding implementation module.
+    :param kdf: The name of the KDF to use. Default to pbkdk2.
+    :return: A key of type str of length key-length
     """
-    if hash_module not in SUPPORTED_HASH_MODULE:
-        raise ValueError("Unsupported hashing algorithm.")
-
-    key_length = SUPPORTED_HASH_MODULE[hash_module]
-    keys = PBKDF2(secret, salt, key_length, count=iterations, hmac_hash_module=hash_module)
-    key = keys[:key_length]
-
+    key = create_key(secret, salt, iterations, key_length, hamc_hash, kdf)
     key = binascii.hexlify(key).decode()
-
-    if DEBUG:
-        print(key)
 
     return key
 
-print("SHA256")
-print("Master Key")
-key_master = create_master_key("password", "0ED4AFF74B4C4EE3AD1CF95DDBAF62EE", 1000000, SHA256)
 
-print("Encryption Key")
-key_encryption = create_master_key(key_master, "Encryption Key", 1, SHA256)
+########################################################################################################################
+## Key creation common code
+##
+########################################################################################################################
+def create_key(secret: str, salt: str, iterations: int, key_length: int, hamc_hash: str, kdf: str) -> bytes:
+    """
+        The common implementation of all key generation APIs, given the parameters.
+    :param secret: The secret, which can be password, pass-phrase, etc using which to create a master key for
+                   subsequent key generations.
+    :param salt: The salt used to generate the key.
+    :param iterations: Number of iterations running the KDF.
+    :param key_length: Length of key being generated.
+    :param hamc_hash: HMAC-Hash to use. Note that this is a string indicating the hash to use. Underlying implementation
+                      per kdf will pick the corresponding implementation module.
+    :param kdf: The name of the KDF to use.
+    :return: A key of type str of length key-length
+    """
+    if kdf.lower() == KDF_PBKDF2:
+        key = create_key_with_pbkdf2(secret, salt, iterations, key_length, hamc_hash)
+    else:
+        raise ValueError("Unsupported kdf:", kdf)
 
-print("HMAC Key")
-key_hmac = create_master_key(key_master, "HMAC Key", 1, SHA256)
+    return key
 
+
+########################################################################################################################
+## KDF specific implementations
+########################################################################################################################
+##################################################################################
+##  PBKDF2 (Crypto.Protocol.KDF from PyCryptodome)
+##################################################################################
+def create_key_with_pbkdf2(secret: str, salt: str, iterations: int, key_length: int, hmac_hash: str) -> bytes:
+    """
+        A key derivation function using PBKDF2, given the parameters. The implementation is using
+        Crypto.protocol.KDF.PBKDF2 from PyCryptodome.
+
+        This method is using hmac_hash_module as specified by hmac_hash. It does not use the mutually exclusive prf
+        parameter.
+    :param secret: The secret, which can be password, pass-phrase, etc using which to create a master key for
+                   subsequent key generations.
+    :param salt: The salt used to generate the key.
+    :param iterations: Number of iterations running the KDF.
+    :param key_length: Length of key being generated.
+    :param hmac_hash: HMAC-Hash to use. Note that this is a string indicating the hash to use. Underlying implementation
+                      per kdf will pick the corresponding implementation module.
+    :return: A key of type str of length key-length
+    """
+    hmac_hash_module = pbkdf2_hmac_hash_modules[hmac_hash]
+    key = PBKDF2(secret, salt, key_length, count=iterations, hmac_hash_module=hmac_hash_module)
+
+    return key
+
+
+print(create_master_key("password", "salt", 1000000, 32, "sha512", "pbkdf2"))
