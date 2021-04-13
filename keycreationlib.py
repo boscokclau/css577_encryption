@@ -60,7 +60,8 @@ def create_master_key(secret: str, salt: str, iterations: int = 1000, key_length
 def create_encryption_key(master_key: str, cipher: str, hmac_hash: str = "sha256", kdf="pbkdf2") -> str:
     """
         Create an encryption key given a master key for cipher using hmac_hash and kdf. Size of key is determined by
-        cipher (16 bytes for AES128, 32 bytes for AES256, 24 bytes for 3DES).
+        cipher (16 bytes for AES128, 32 bytes for AES256, 24 bytes for 3DES). Internally, salt for the operation is
+        pre-defined by the system.
     :param master_key: Master key as the seed to generate the encryption key
     :param cipher: Cipher to use. Currently supports "aes128", "aes256", "3des".
     :param hmac_hash: HMAC hash to use. Currently supports "sha256", and "sha512". Default to "sha256"
@@ -71,6 +72,26 @@ def create_encryption_key(master_key: str, cipher: str, hmac_hash: str = "sha256
     key_length = cipher_scheme[KEY_LENGTH_IN_BYTES]
 
     enc_key = create_key(master_key, SALT_ENCRYPTION_KEY, ENCRYPTION_KEY_ROUNDS, key_length, hmac_hash, kdf)
+    enc_key = binascii.hexlify(enc_key).decode()
+
+    return enc_key
+
+
+def create_hmac_key(master_key: str, cipher: str, hmac_hash: str = "sha256", kdf="pbkdf2") -> str:
+    """
+        Create an hmac key given a master key for cipher using hmac_hash and kdf. Size of key is determined by
+        cipher (16 bytes for AES128, 32 bytes for AES256, 24 bytes for 3DES). Internally, salt for the operation is
+        pre-defined by the system.
+    :param master_key: Master key as the seed to generate the encryption key
+    :param cipher: Cipher to use. Currently supports "aes128", "aes256", "3des".
+    :param hmac_hash: HMAC hash to use. Currently supports "sha256", and "sha512". Default to "sha256"
+    :param kdf: KDF to use. Default to "pbkdf2".
+    :return: A well-formed encryption key of length pertained to cipher.
+    """
+    cipher_scheme = get_cipher_scheme(cipher, hmac_hash)
+    key_length = cipher_scheme[KEY_LENGTH_IN_BYTES]
+
+    enc_key = create_key(master_key, SALT_HMAC_KEY, ENCRYPTION_KEY_ROUNDS, key_length, hmac_hash, kdf)
     enc_key = binascii.hexlify(enc_key).decode()
 
     return enc_key
@@ -131,4 +152,3 @@ def create_key_with_pbkdf2(secret: str, salt: str, iterations: int, key_length: 
     key = PBKDF2(secret, salt, key_length, count=iterations, hmac_hash_module=hmac_hash_module)
 
     return key
-
