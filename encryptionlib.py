@@ -71,7 +71,7 @@ def create_key(secret: str, salt: str, iterations: int, key_length: int, hamc_ha
     if kdf.lower() == KDF_PBKDF2:
         key = create_key_with_pbkdf2(secret, salt, iterations, key_length, hamc_hash)
     else:
-        raise ValueError("Unsupported kdf:", kdf)
+        raise ValueError("Unsupported kdf: " + kdf)
 
     return key
 
@@ -98,8 +98,11 @@ def create_key_with_pbkdf2(secret: str, salt: str, iterations: int, key_length: 
                       per kdf will pick the corresponding implementation module.
     :return: A key of type str of length key-length
     """
-    hmac_hash_module = pbkdf2_hmac_hash_modules[hmac_hash]
+    try:
+        hmac_hash_module = pbkdf2_hmac_hash_modules[hmac_hash]
+    except KeyError:
+        raise ValueError("Unsupported hmac_hash: " + hmac_hash)
+
     key = PBKDF2(secret, salt, key_length, count=iterations, hmac_hash_module=hmac_hash_module)
 
     return key
-
