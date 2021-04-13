@@ -4,6 +4,8 @@
 Created on Apr 11, 2021
 
 @author: boscolau
+
+This module contains meta-data given a cipher and a hmac-sha scheme.
 """
 
 from Crypto.Cipher import AES

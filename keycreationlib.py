@@ -5,8 +5,28 @@ Created on Apr 05, 2021
 
 @author: boscolau
 
-This is the module defining the API for UI application to create keys given a secret and several cryptographic
-parameters.
+This is the module defining the APIs to derive cryptographically secure keys given a secret. These APIs are wrappers
+over Key Derivative Functions.
+
+This modules contains three categories of APIs:
+
+1.  Application APIs. Available to user application codes, these APIs are functional specifics are and are returning
+ values of type str. Users of these APIs are shielded from knowing the underlying KDF library and implementations, by
+ only the need to specify the scheme to use.
+
+2.  Utility APIs. These APIs are wrappers to which will invoke the corresponding schemes as specified by the application
+ APIs. They are still agnostic to the actual library implementing KDFs. These APIs return value of type bytes.
+
+3. Library specific implementation. These are considered private methods, though, in Python, is callable but should be
+ reserved for debugging purposes. These are the only functions in the module that are aware of the library of choice
+ of selected schemes. These APIs return values of type bytes.
+
+These categories can be thought of with the following use hierarchy:
+
+UI Application ---- uses ---> Application APIs --- uses ---> Utility APIs --- Library specific APIs.
+
+Application developer can refer to the method level documentations for their use.
+
 """
 
 import binascii
@@ -31,7 +51,7 @@ pbkdf2_hmac_hash_modules = {"sha256": Crypto.Hash.SHA256, "sha512": Crypto.Hash.
 
 
 ########################################################################################################################
-## Public APIs
+## Application APIs
 ##  APIs for application use. These APIs are agnostic to KDF implementations, hence hmac_hash and kdf are indicated by
 ##  str type so the selection of the actual implementation module is deferred to the corresponding methods in the
 ##  KDF specific implementation section
@@ -98,7 +118,7 @@ def create_hmac_key(master_key: str, cipher: str, hmac_hash: str = "sha256", kdf
 
 
 ########################################################################################################################
-## Key creation common code
+## Utility APIs
 ##
 ########################################################################################################################
 def create_key(secret: str, salt: str, iterations: int, key_length: int, hmac_hash: str, kdf: str) -> bytes:
@@ -123,7 +143,7 @@ def create_key(secret: str, salt: str, iterations: int, key_length: int, hmac_ha
 
 
 ########################################################################################################################
-## KDF specific implementations
+## Library specific APIs: KDF specific implementations
 ########################################################################################################################
 ##################################################################################
 ##  PBKDF2 (Crypto.Protocol.KDF from PyCryptodome)

@@ -4,6 +4,8 @@
 Created on Apr 11, 2021
 
 @author: boscolau
+
+This modules contain metrics utilities. One major example is @timing, which is a decorator to measure execution time.
 """
 
 from time import time
