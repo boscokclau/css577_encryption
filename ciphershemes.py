@@ -23,8 +23,8 @@ schemes = {
     "AES256WithSHA256": {NAME: "AES256WithSHA256", CIPHER: AES, KEY_LENGTH_IN_BYTES: 32, BLOCK_SIZE_IN_BYTES: 16},
     "AES256WithSHA512": {NAME: "AES256WithSHA512", CIPHER: AES, KEY_LENGTH_IN_BYTES: 32, BLOCK_SIZE_IN_BYTES: 16},
 
-    "DES3WithSHA256": {NAME: "DES3WithSHA256", CIPHER: DES3, KEY_LENGTH_IN_BYTES: 24, BLOCK_SIZE_IN_BYTES: 8},
-    "DES3WithSHA512": {NAME: "DES3WithSHA512", CIPHER: DES3, KEY_LENGTH_IN_BYTES: 24, BLOCK_SIZE_IN_BYTES: 8}
+    "3DESWithSHA256": {NAME: "3DESWithSHA256", CIPHER: DES3, KEY_LENGTH_IN_BYTES: 24, BLOCK_SIZE_IN_BYTES: 8},
+    "3DESWithSHA512": {NAME: "3DESWithSHA512", CIPHER: DES3, KEY_LENGTH_IN_BYTES: 24, BLOCK_SIZE_IN_BYTES: 8}
 }
 
 # Support Set
@@ -42,10 +42,6 @@ def get_cipher_scheme(cipher_name: str, hash_algorithm: str):
 
     if hash_algorithm not in hashes:
         raise ValueError("Hash not supported: " + hash_algorithm)
-
-    # Special treatment for 3DES
-    if cipher_name == "3DES":
-        cipher_name = "DES3"
 
     scheme_name = cipher_name + "With" + hash_algorithm
 
