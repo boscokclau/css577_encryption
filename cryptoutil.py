@@ -61,14 +61,24 @@ def encrypt(data: bytes, secret: str, cipher: str = "aes128", hmac_hash="sha256"
     #######################################
     # Generate keys
     #######################################
+    """
     master_key = create_master_key(secret, SALT_MASTER_KEY, iterations, key_length, hmac_hash, kdf)
     encryption_key = create_encryption_key(master_key, cipher, hmac_hash, kdf)
     hmac_key = create_hmac_key(master_key, cipher, hmac_hash, kdf)
+    """
+    master_key = create_key(secret=secret, salt=SALT_MASTER_KEY, iterations=iterations, key_length=key_length,
+                            hmac_hash=hmac_hash, kdf=kdf)
+
+    encryption_key = create_key(secret=master_key, salt=SALT_ENCRYPTION_KEY, iterations=1, key_length=key_length,
+                                hmac_hash=hmac_hash, kdf=kdf)
+
+    hmac_key = create_key(secret=master_key, salt=SALT_HMAC_KEY, iterations=1, key_length=key_length,
+                          hmac_hash=hmac_hash, kdf=kdf)
 
     if DEBUG:
         print("mkey:", master_key)
-        print("ekey:", encryption_key)
-        print("hkey:", hmac_key)
+    print("ekey:", encryption_key)
+    print("hkey:", hmac_key)
 
     #######################################
     # Get cipher object with auto-gen IV
@@ -90,9 +100,9 @@ def encrypt(data: bytes, secret: str, cipher: str = "aes128", hmac_hash="sha256"
 
     if DEBUG:
         print("    hmac:", hmac.digest(), "|", len(hmac.digest()))
-        print("      iv:", iv)
-        print("env_data:", data_encrypted)
-        print("   final:", hmac.digest() + iv_data_encrypted)
+    print("      iv:", iv)
+    print("env_data:", data_encrypted)
+    print("   final:", hmac.digest() + iv_data_encrypted)
 
     return hmac_iv_data_encrypted
 
@@ -101,7 +111,7 @@ def decrypt(data: bytes, secret: str) -> bytes:
     #######################################
     # Get scheme operating parameters
     #######################################
-    cipher, hmac_hash, iterations, kdf = __get_header_info(data)
+    cipher, hmac_hash, iterations, kdf, salt_master_key, salt_hmac_key, salt_encrption_key = __get_header_info(data)
 
     #######################################
     # Get scheme operating parameters
@@ -111,9 +121,20 @@ def decrypt(data: bytes, secret: str) -> bytes:
     #######################################
     # Generate keys
     #######################################
+    """
     master_key = create_master_key(secret, SALT_MASTER_KEY, iterations, key_length, hmac_hash, kdf)
     decryption_key = create_encryption_key(master_key, cipher, hmac_hash, kdf)  # symmetric cipher
     hmac_key = create_hmac_key(master_key, cipher, hmac_hash, kdf)
+    """
+
+    master_key = create_key(secret=secret, salt=SALT_MASTER_KEY, iterations=iterations, key_length=key_length,
+                            hmac_hash=hmac_hash, kdf=kdf)
+
+    decryption_key = create_key(secret=master_key, salt=SALT_ENCRYPTION_KEY, iterations=1, key_length=key_length,
+                                hmac_hash=hmac_hash, kdf=kdf)
+
+    hmac_key = create_key(secret=master_key, salt=SALT_HMAC_KEY, iterations=1, key_length=key_length,
+                          hmac_hash=hmac_hash, kdf=kdf)
 
     if DEBUG:
         print("mkey:", master_key)
@@ -177,13 +198,18 @@ def __get_operation_parameters(cipher: str, hmac_hash: str):
 
 def __get_header_info(data: bytes) -> (str, str, str, str):
     # TODO: Code to extract header
-    header = {"scheme": "aes128", "hmac_hash": "sha256", "rounds": 1000, "kdf": "pbkdf2"}
+    header = {"scheme": "aes128", "hmac_hash": "sha256", "rounds": 1000, "kdf": "pbkdf2", "mkey_salt": SALT_MASTER_KEY,
+              "hkey_salt": SALT_HMAC_KEY, "ekey_salt": SALT_ENCRYPTION_KEY}
+
     cipher = header["scheme"]
     hmac_hash = header["hmac_hash"]
     iterations = header["rounds"]
     kdf = header["kdf"]
+    salt_master_key = header["mkey_salt"]
+    salt_hmac_key = header["hkey_salt"]
+    salt_encryption_key = header["ekey_salt"]
 
-    return cipher, hmac_hash, iterations, kdf
+    return cipher, hmac_hash, iterations, kdf, salt_master_key, salt_hmac_key, salt_encryption_key
 
 
 def __get_scheme_impl(cipher: str, hmac_sha: str) -> dict:

@@ -8,16 +8,13 @@ Created on Apr 05, 2021
 This is the module defining the APIs to derive cryptographically secure keys given a secret. These APIs are wrappers
 over Key Derivative Functions.
 
-This modules contains three categories of APIs:
+This modules contains two categories of APIs:
 
 1.  Application APIs. Available to user application codes, these APIs are functional specifics are and are returning
  values of type str. Users of these APIs are shielded from knowing the underlying KDF library and implementations, by
  only the need to specify the scheme to use.
 
-2.  Utility APIs. These APIs are wrappers to which will invoke the corresponding schemes as specified by the application
- APIs. They are still agnostic to the actual library implementing KDFs. These APIs return value of type bytes.
-
-3. Library specific implementation. These are considered private methods, though, in Python, is callable but should be
+2.  Library specific implementation. These are considered private methods, though, in Python, is callable but should be
  reserved for debugging purposes. These are the only functions in the module that are aware of the library of choice
  of selected schemes. These APIs return values of type bytes.
 
@@ -72,56 +69,11 @@ def create_master_key(secret: str, salt: str, iterations: int = 1000, key_length
     :return: A key of type str of length key-length
     """
     key = create_key(secret, salt, iterations, key_length, hamc_hash, kdf)
-    key = binascii.hexlify(key).decode()
 
     return key
 
 
-def create_encryption_key(master_key: str, cipher: str, hmac_hash: str = "sha256", kdf="pbkdf2") -> str:
-    """
-        Create an encryption key given a master key for cipher using hmac_hash and kdf. Size of key is determined by
-        cipher (16 bytes for AES128, 32 bytes for AES256, 24 bytes for 3DES). Internally, salt for the operation is
-        pre-defined by the system.
-    :param master_key: Master key as the seed to generate the encryption key
-    :param cipher: Cipher to use. Currently supports "aes128", "aes256", "3des".
-    :param hmac_hash: HMAC hash to use. Currently supports "sha256", and "sha512". Default to "sha256"
-    :param kdf: KDF to use. Default to "pbkdf2".
-    :return: A well-formed encryption key of length pertained to cipher.
-    """
-    cipher_scheme = get_cipher_scheme(cipher, hmac_hash)
-    key_length = cipher_scheme[KEY_LENGTH_IN_BYTES]
-
-    enc_key = create_key(master_key, SALT_ENCRYPTION_KEY, ENCRYPTION_KEY_ROUNDS, key_length, hmac_hash, kdf)
-    enc_key = binascii.hexlify(enc_key).decode()
-
-    return enc_key
-
-
-def create_hmac_key(master_key: str, cipher: str, hmac_hash: str = "sha256", kdf="pbkdf2") -> str:
-    """
-        Create an hmac key given a master key for cipher using hmac_hash and kdf. Size of key is determined by
-        cipher (16 bytes for AES128, 32 bytes for AES256, 24 bytes for 3DES). Internally, salt for the operation is
-        pre-defined by the system.
-    :param master_key: Master key as the seed to generate the encryption key
-    :param cipher: Cipher to use. Currently supports "aes128", "aes256", "3des".
-    :param hmac_hash: HMAC hash to use. Currently supports "sha256", and "sha512". Default to "sha256"
-    :param kdf: KDF to use. Default to "pbkdf2".
-    :return: A well-formed encryption key of length pertained to cipher.
-    """
-    cipher_scheme = get_cipher_scheme(cipher, hmac_hash)
-    key_length = cipher_scheme[KEY_LENGTH_IN_BYTES]
-
-    enc_key = create_key(master_key, SALT_HMAC_KEY, ENCRYPTION_KEY_ROUNDS, key_length, hmac_hash, kdf)
-    enc_key = binascii.hexlify(enc_key).decode()
-
-    return enc_key
-
-
-########################################################################################################################
-## Utility APIs
-##
-########################################################################################################################
-def create_key(secret: str, salt: str, iterations: int, key_length: int, hmac_hash: str, kdf: str) -> bytes:
+def create_key(secret: str, salt: str, iterations: int, key_length: int, hmac_hash: str, kdf: str) -> str:
     """
         The common implementation of all key generation APIs, given the parameters.
     :param secret: The secret, which can be password, pass-phrase, etc using which to create a master key for
@@ -139,7 +91,7 @@ def create_key(secret: str, salt: str, iterations: int, key_length: int, hmac_ha
     else:
         raise ValueError("Unsupported kdf: " + kdf)
 
-    return key
+    return binascii.hexlify(key).decode()
 
 
 ########################################################################################################################

@@ -36,7 +36,7 @@ class CreateKey(unittest.TestCase):
 
         try:
             key = create_key(data[SECRET], data[SALT], data[ITERATIONS], data[KEY_LENGTH], data[HMAC_HASH], data[KDF])
-            key = binascii.hexlify(key).decode()
+            # key = binascii.hexlify(key).decode()
 
             self.assertEqual(expect[KEY], key)
 
