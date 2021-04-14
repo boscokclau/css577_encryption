@@ -24,7 +24,6 @@ from Crypto.Hash import SHA512
 from Crypto.Util.Padding import pad
 from Crypto.Util.Padding import unpad
 
-from config import *
 from keycreationlib import *
 
 # Verbosity
