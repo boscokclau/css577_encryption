@@ -14,13 +14,13 @@ This modules contains two categories of APIs:
  values of type str. Users of these APIs are shielded from knowing the underlying KDF library and implementations, by
  only the need to specify the scheme to use.
 
-2.  Library specific implementation. These are considered private methods, though, in Python, is callable but should be
+2.  Implementation specific implementation. These are considered private methods, though, in Python, is callable but should be
  reserved for debugging purposes. These are the only functions in the module that are aware of the library of choice
  of selected schemes. These APIs return values of type bytes.
 
 These categories can be thought of with the following use hierarchy:
 
-UI Application ---- uses ---> Application APIs --- uses ---> Utility APIs --- Library specific APIs.
+UI Application ---- uses ---> Application APIs --- uses ---> Implementation specific APIs.
 
 Application developer can refer to the method level documentations for their use.
 
@@ -30,15 +30,8 @@ import binascii
 import Crypto.Hash.SHA256
 import Crypto.Hash.SHA512
 
-from config import *
-
 from Crypto.Protocol.KDF import PBKDF2
 from metricsutil import timing
-
-from encschemeconfig import *
-
-### Debugging switch ###
-# DEBUG = True
 
 ### Constants
 KDF_PBKDF2 = "pbkdf2"
