@@ -46,7 +46,7 @@ pbkdf2_hmac_hash_modules = {"sha256": Crypto.Hash.SHA256, "sha512": Crypto.Hash.
 ##  KDF specific implementation section
 ########################################################################################################################
 def create_master_key(secret: str, salt: str, iterations: int = 1000, key_length: int = 32,
-                      hamc_hash: str = "sha256", kdf="pbkdf2") -> str:
+                      hmac_hash: str = "sha256", kdf="pbkdf2") -> str:
     """
         Create a master key from the secret and salt, with  operation parameters.
     :param secret: The secret, which can be password, pass-phrase, etc using which to create a master key for
@@ -59,7 +59,7 @@ def create_master_key(secret: str, salt: str, iterations: int = 1000, key_length
     :param kdf: The name of the KDF to use. Default to pbkdf2.
     :return: A key of type str of length key-length
     """
-    key = create_key(secret, salt, iterations, key_length, hamc_hash, kdf)
+    key = create_key(secret, salt, iterations, key_length, hmac_hash, kdf)
 
     return key
 
