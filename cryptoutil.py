@@ -96,10 +96,10 @@ def encrypt(data: bytes, secret: str, cipher: str = "aes128", hmac_hash="sha256"
     master_key = create_key(secret=secret, salt=salt_master_key, iterations=iterations, key_length=key_length,
                             hmac_hash=hmac_hash, kdf=kdf)
 
-    encryption_key = create_key(secret=master_key, salt=salt_encryption_key, iterations=1, key_length=key_length,
+    encryption_key = create_key(secret=master_key, salt=salt_encryption_key, iterations=ENCRYPTION_KEY_ROUNDS, key_length=key_length,
                                 hmac_hash=hmac_hash, kdf=kdf)
 
-    hmac_key = create_key(secret=master_key, salt=salt_hmac_key, iterations=1, key_length=key_length,
+    hmac_key = create_key(secret=master_key, salt=salt_hmac_key, iterations=HMAC_KEY_ROUNDS, key_length=key_length,
                           hmac_hash=hmac_hash, kdf=kdf)
 
     if DEBUG:
