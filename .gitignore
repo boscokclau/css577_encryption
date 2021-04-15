@@ -6,7 +6,7 @@
 
 # Project runtime output
 *.enc
-*decrypted.*
+decrypted_*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

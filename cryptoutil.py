@@ -280,12 +280,3 @@ def __unpad_message(base: bytes, block_length: int, style: str = "pkcs7"):
     return val
 
 
-with open("ProdComp.xlsx", "rb") as f:
-    file_to_encrypt = f.read()
-
-encrypted_value = encrypt(file_to_encrypt, "password")
-decrypted_value = decrypt(encrypted_value, "password")
-
-print("encValue:", encrypted_value, "|", len(encrypted_value))
-print("oriValue:", file_to_encrypt, "|", len(file_to_encrypt))
-print("decValue:", decrypted_value, "|", len(decrypted_value))
