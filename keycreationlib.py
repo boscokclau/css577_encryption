@@ -38,7 +38,7 @@ from metricsutil import timing
 from encschemeconfig import *
 
 ### Debugging switch ###
-DEBUG = True
+# DEBUG = True
 
 ### Constants
 KDF_PBKDF2 = "pbkdf2"
