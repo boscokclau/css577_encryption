@@ -4,6 +4,9 @@
 # OSX
 .DS_Store
 
+# Copyrighted test file
+Cryptography_and_Network_Security.pdf
+
 # Project runtime output
 *.enc
 decrypted_*

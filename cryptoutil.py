@@ -33,6 +33,7 @@ from keycreationlib import *
 
 # Verbosity
 DEBUG = False
+VERBOSE = False
 
 # dict key names
 NAME = "name"
@@ -96,7 +97,8 @@ def encrypt(data: bytes, secret: str, cipher: str = "aes128", hmac_hash="sha256"
     master_key = create_key(secret=secret, salt=salt_master_key, iterations=iterations, key_length=key_length,
                             hmac_hash=hmac_hash, kdf=kdf)
 
-    encryption_key = create_key(secret=master_key, salt=salt_encryption_key, iterations=ENCRYPTION_KEY_ROUNDS, key_length=key_length,
+    encryption_key = create_key(secret=master_key, salt=salt_encryption_key, iterations=ENCRYPTION_KEY_ROUNDS,
+                                key_length=key_length,
                                 hmac_hash=hmac_hash, kdf=kdf)
 
     hmac_key = create_key(secret=master_key, salt=salt_hmac_key, iterations=HMAC_KEY_ROUNDS, key_length=key_length,
@@ -128,6 +130,9 @@ def encrypt(data: bytes, secret: str, cipher: str = "aes128", hmac_hash="sha256"
     #######################################
     header = __build_header(kdf, cipher, hmac_hash, iterations, salt_master_key, salt_hmac_key, salt_encryption_key)
     header_hmac_iv_data_encrypted = header + HEADER_PAYLOAD_SEPARATOR + hmac_iv_data_encrypted
+
+    if VERBOSE:
+        print("    hmac:", hmac.digest(), "|", len(hmac.digest()))
 
     if DEBUG:
         print("    hmac:", hmac.digest(), "|", len(hmac.digest()))
@@ -188,6 +193,10 @@ def decrypt(data: bytes, secret: str) -> bytes:
 
     # 3. Calculate HMAC
     hmac_derived = HMAC.HMAC(binascii.unhexlify(hmac_key), iv_data_encrypted, hmac_hash_impl)
+
+    if VERBOSE:
+        print("hmacextr:", hmac_extracted)
+        print("cal_hmac:", hmac_derived.digest())
 
     if DEBUG:
         print("hmacextr:", hmac_extracted)
@@ -278,5 +287,3 @@ def __pad_message(base: bytes, block_length: int, style: str = "pkcs7"):
 def __unpad_message(base: bytes, block_length: int, style: str = "pkcs7"):
     val = unpad(base, block_length, style)
     return val
-
-
