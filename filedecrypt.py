@@ -8,6 +8,7 @@ Created on Apr 14, 2021
 
 import argparse
 import cryptoutil
+from metricsutil import timing
 
 # DEBUG
 DEBUG = False
@@ -16,20 +17,15 @@ DEBUG = False
 FILE_EXTENSION = ".enc"
 FILE_PREFIX = "decrypted_"
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('file', help="File to decrypt.")
-    parser.add_argument('password', help='Password')
 
-    args = parser.parse_args()
-
-    filename = args.file
+@timing
+def decrypt_file(filename: str, secret: str):
     print("Decrypting:", filename)
 
     with open(filename, "rb") as fr:
         file_to_decrypt = fr.read()
 
-    decrypted_value = cryptoutil.decrypt(file_to_decrypt, "password")
+    decrypted_value = cryptoutil.decrypt(file_to_decrypt, secret)
 
     with open(FILE_PREFIX + filename[0:-len(FILE_EXTENSION)], "wb") as fw:
         fw.write(decrypted_value)
@@ -41,3 +37,16 @@ if __name__ == '__main__':
         print("oriValue:", file_to_encrypt, "|", len(file_to_encrypt))
 
     print("Decryption Completed. File name::", FILE_PREFIX + filename[0:-len(FILE_EXTENSION)])
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('file', help="File to decrypt.")
+    parser.add_argument('password', help='Password')
+
+    args = parser.parse_args()
+
+    filename = args.file
+    password = args.password
+
+    decrypt_file(filename, password)
