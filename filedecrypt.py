@@ -18,6 +18,9 @@ FILE_EXTENSION = ".enc"
 FILE_PREFIX = "decrypted_"
 
 
+########################################################################################################################
+## Runner
+########################################################################################################################
 @timing
 def decrypt_file(filename: str, secret: str):
     print("Decrypting:", filename)
@@ -39,6 +42,9 @@ def decrypt_file(filename: str, secret: str):
     print("Decryption Completed. File name::", FILE_PREFIX + filename[0:-len(FILE_EXTENSION)])
 
 
+########################################################################################################################
+## Program Main
+########################################################################################################################
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('file', help="File to decrypt.")
