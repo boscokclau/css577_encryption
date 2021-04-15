@@ -23,6 +23,7 @@ from Crypto.Cipher import DES3
 from Crypto.Hash import HMAC
 from Crypto.Hash import SHA256
 from Crypto.Hash import SHA512
+from Crypto.Random import get_random_bytes
 from Crypto.Util.Padding import pad
 from Crypto.Util.Padding import unpad
 
@@ -63,6 +64,8 @@ scheme_impls = {
     "3DESWithSHA512": {NAME: "3DESWithSHA512", CIPHER_IMPL: DES3, HASH_IMPL: SHA512, OP_MODE: AES.MODE_CBC}
 }
 
+SALT_SIZE = 16  # bytes
+
 
 ########################################################################################################################
 ## Application APIs
@@ -74,9 +77,14 @@ def encrypt(data: bytes, secret: str, cipher: str = "aes128", hmac_hash="sha256"
     # Get scheme operating parameters
     #######################################
     cipher_impl, op_mode, hmac_hash_impl, key_length, block_size = __get_operation_parameters(cipher, hmac_hash)
-    salt_master_key = SALT_MASTER_KEY
-    salt_hmac_key = SALT_HMAC_KEY
-    salt_encryption_key = SALT_ENCRYPTION_KEY
+    salt_master_key = str(get_random_bytes(SALT_SIZE))
+    salt_hmac_key = str(get_random_bytes(SALT_SIZE))
+    salt_encryption_key = str(get_random_bytes(SALT_SIZE))
+
+    if DEBUG:
+        print("smk:", salt_master_key, "|", type(salt_master_key))
+        print("shk:", salt_hmac_key, "|", type(salt_hmac_key))
+        print("sek:", salt_encryption_key, "|", type(salt_encryption_key))
 
     #######################################
     # Generate keys
