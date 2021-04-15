@@ -31,7 +31,6 @@ import Crypto.Hash.SHA256
 import Crypto.Hash.SHA512
 
 from Crypto.Protocol.KDF import PBKDF2
-from metricsutil import timing
 
 ### Constants
 KDF_PBKDF2 = "pbkdf2"
@@ -46,7 +45,6 @@ pbkdf2_hmac_hash_modules = {"sha256": Crypto.Hash.SHA256, "sha512": Crypto.Hash.
 ##  str type so the selection of the actual implementation module is deferred to the corresponding methods in the
 ##  KDF specific implementation section
 ########################################################################################################################
-@timing
 def create_master_key(secret: str, salt: str, iterations: int = 1000, key_length: int = 32,
                       hamc_hash: str = "sha256", kdf="pbkdf2") -> str:
     """
