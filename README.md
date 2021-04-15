@@ -9,7 +9,7 @@
 ###Dependencies: [PyCryptodome 3.10.1](https://pycryptodome.readthedocs.io/en/latest/)
 
 To install, run: 
-> `pip3 install pycryptodome`
+> `pip3 install -r requirements`
 
 ###Configurations
 **Configuration File:** `filecrypto.ini`
