@@ -32,7 +32,7 @@ from encschemeconfig import *
 from keycreationlib import *
 
 # Verbosity
-DEBUG = True
+DEBUG = False
 
 # dict key names
 NAME = "name"
