@@ -32,7 +32,7 @@ from encschemeconfig import *
 from keycreationlib import *
 
 # Verbosity
-DEBUG = True
+DEBUG = False
 
 # dict key names
 NAME = "name"
@@ -77,9 +77,13 @@ def encrypt(data: bytes, secret: str, cipher: str = "aes128", hmac_hash="sha256"
     # Get scheme operating parameters
     #######################################
     cipher_impl, op_mode, hmac_hash_impl, key_length, block_size = __get_operation_parameters(cipher, hmac_hash)
-    salt_master_key = str(get_random_bytes(SALT_SIZE))
-    salt_hmac_key = str(get_random_bytes(SALT_SIZE))
-    salt_encryption_key = str(get_random_bytes(SALT_SIZE))
+
+    #######################################
+    # Generate salts
+    #######################################
+    salt_master_key = binascii.hexlify(get_random_bytes(SALT_SIZE)).decode()
+    salt_hmac_key = binascii.hexlify(get_random_bytes(SALT_SIZE)).decode()
+    salt_encryption_key = binascii.hexlify(get_random_bytes(SALT_SIZE)).decode()
 
     if DEBUG:
         print("smk:", salt_master_key, "|", type(salt_master_key))
@@ -100,8 +104,8 @@ def encrypt(data: bytes, secret: str, cipher: str = "aes128", hmac_hash="sha256"
 
     if DEBUG:
         print("mkey:", master_key)
-    print("ekey:", encryption_key)
-    print("hkey:", hmac_key)
+        print("ekey:", encryption_key)
+        print("hkey:", hmac_key)
 
     #######################################
     # Get cipher object with auto-gen IV
@@ -127,10 +131,10 @@ def encrypt(data: bytes, secret: str, cipher: str = "aes128", hmac_hash="sha256"
 
     if DEBUG:
         print("    hmac:", hmac.digest(), "|", len(hmac.digest()))
-    print("      iv:", iv, "|", type(iv), "|", binascii.hexlify(iv))
-    print("env_data:", data_encrypted)
-    print("   final:", hmac.digest() + iv_data_encrypted)
-    print("complete:", header_hmac_iv_data_encrypted)
+        print("      iv:", iv, "|", type(iv), "|", binascii.hexlify(iv))
+        print("env_data:", data_encrypted)
+        print("   final:", hmac.digest() + iv_data_encrypted)
+        print("complete:", header_hmac_iv_data_encrypted)
 
     return header_hmac_iv_data_encrypted
 
