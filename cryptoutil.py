@@ -220,6 +220,17 @@ def decrypt(data: bytes, secret: str) -> bytes:
 ## Utilities APIs
 ########################################################################################################################
 def __get_operation_parameters(cipher: str, hmac_hash: str):
+    """
+        A convenience method retrieving operation parameters given cipher and hmac_hash.
+    :param cipher: The str indicating the cipher. E.g. aes128
+    :param hmac_hash: The str indicating the hmac_hash. E.g. sha256
+    :return: A tuple, in order cipher_impl, op_mode, hmac_hash_impl, key_length, block_size
+                cipher_impl: The implementation object of  cipher, as configured in scheme_impl in this module
+                op_mode: The implementation object of op_mode, as configured in scheme_impl in this module
+                hmac_hash_impl: The implementation object of hmac_hash, as configured in scheme_impl in this module
+                key_length: The key-length of cipher, as configured in the encschemeconfig module
+                block-size: The block-size of cipher, as configured in the encschemeconfig module
+    """
     scheme_impl = __get_scheme_impl(cipher, hmac_hash)
     scheme_config = get_cipher_scheme(cipher, hmac_hash)
 
@@ -234,6 +245,19 @@ def __get_operation_parameters(cipher: str, hmac_hash: str):
 
 def __build_header(kdf: str, cipher: str, hmac_hash: str, iterations: int, salt_master_key: str, salt_hmac_key: str,
                    salt_encryption_key: str) -> bytes:
+    """
+        Construct the header bytes connected with "_".
+        The name of the parameters indicates the purpose of the value.
+    :param kdf:
+    :param cipher:
+    :param hmac_hash:
+    :param iterations:
+    :param salt_master_key:
+    :param salt_hmac_key:
+    :param salt_encryption_key:
+    :return: The header bytes connected with the underscore "_" character,
+             as <kdf>_<cipher>_<hmac_hash>_<str(iterations)>_<salt_master_key>_<salt_hmac_key>_<salt_encryption_key
+    """
     header = "_".join([
         kdf, cipher, hmac_hash, str(iterations), salt_master_key, salt_hmac_key, salt_encryption_key])
 
@@ -241,6 +265,11 @@ def __build_header(kdf: str, cipher: str, hmac_hash: str, iterations: int, salt_
 
 
 def __get_header_info(data: bytes) -> (str, str, str, int, str, str, str):
+    """
+        Extract header information given data, the header bytes
+    :param data: The header in bytes
+    :return: A tuple: kdf, cipher, hmac_hash, iterations, salt_master_key, salt_hmac_key, salt_encryption_key
+    """
     header_payload = data.split(HEADER_PAYLOAD_SEPARATOR)
 
     if DEBUG:
@@ -267,11 +296,22 @@ def __get_header_info(data: bytes) -> (str, str, str, int, str, str, str):
 
 
 def __get_payload(data: bytes) -> bytes:
+    """
+        Return the payload from data, which is the output of encryption.
+    :param data: The original output of an encryption acted upon the data being encrypted by the program.
+    :return: The payload part of data, made up of HMAC, IV, and encrypted data
+    """
     header_payload = data.split(HEADER_PAYLOAD_SEPARATOR)
     return header_payload[1]
 
 
 def __get_scheme_impl(cipher: str, hmac_sha: str) -> dict:
+    """
+        Return the scheme_impl entry defined in this module given cipher and hmac_sha.
+    :param cipher: The str indicating the cipher. E.g. aes128
+    :param hmac_sha: The str indicating the hmac_hash. E.g. sha256
+    :return: The dictionary containing the implementation choices given cipher and hmac_sha.
+    """
     scheme_name = "".join([cipher.upper(), "With", hmac_sha.upper()])
     try:
         return scheme_impls[scheme_name]
@@ -280,10 +320,23 @@ def __get_scheme_impl(cipher: str, hmac_sha: str) -> dict:
 
 
 def __pad_message(base: bytes, block_length: int, style: str = "pkcs7"):
+    """
+        Wrapper method around library specific pad() method to decouple caller from library specific implementation.
+    :param base: Data to be padded
+    :param block_length: Hint for padding
+    :param style: Padding standard. Default to pkcs7
+    :return: Padded base.
+    """
     val = pad(base, block_length, style)
     return val
 
 
 def __unpad_message(base: bytes, block_length: int, style: str = "pkcs7"):
+    """
+        Wrapper method around library specific pad() method to decouple caller from library specific implementation.
+    :param base: Data to be uppaded
+    :param style: Hint for unpadding
+    :return: Unpadded base
+    """
     val = unpad(base, block_length, style)
     return val
