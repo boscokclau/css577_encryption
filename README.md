@@ -4,14 +4,14 @@
 
 ## Running the applications
 
-###Runtime: python 3.7
+### Runtime: python 3.7
 
-###Dependencies: [PyCryptodome 3.10.1](https://pycryptodome.readthedocs.io/en/latest/)
+### Dependencies: [PyCryptodome 3.10.1](https://pycryptodome.readthedocs.io/en/latest/)
 
 To install, run: 
 > `pip3 install -r requirements`
 
-###Configurations
+### Configurations
 **Configuration File:** `filecrypto.ini`
 
 `kdf` : KDF function to use. Set to `pbkdf2`, which is the only KDF supported.
@@ -22,10 +22,10 @@ To install, run:
 
 `iterations`: Number of rounds to derive key in the KDF function. Value can be any non-zero positive integer.
 
-###Encrypt File:
+### Encrypt File:
 >`python3 fileencrypt.py filename password`
 
-###Decrypt File:
+### Decrypt File:
 >`python3 filedecrypt.py filename password`
 
 ## Performance Discussions on PBKDF2
