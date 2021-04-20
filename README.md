@@ -1,4 +1,3 @@
-# css577_encryption 
 # Encryption Assignment
 
 
